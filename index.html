@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>img2txt-h v14.1 (External XML)</title>
+    <style>
+        /* --- 樣式保持不變 --- */
+        :root {
+            --bg-color: #1a1a1a;
+            --sidebar-bg: #2d2d2d;
+            --text-color: #eee;
+            --input-bg: #444;
+            --border-color: #555;
+            --primary-color: #007bff;
+            --primary-hover: #0056b3;
+            --success-color: #28a745;
+            --link-color: #58a6ff; 
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: row; 
+            overflow: hidden; 
+        }
+
+        #toast-container {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            z-index: 3000; pointer-events: none; width: 90%; max-width: 400px; text-align: center;
+        }
+        
+        .toast {
+            background-color: rgba(40, 40, 40, 0.95); color: #fff; padding: 10px 20px;
+            border-radius: 50px; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            font-size: 14px; opacity: 0; transform: translateY(-20px);
+            transition: opacity 0.3s, transform 0.3s; border-left: 5px solid var(--primary-color);
+            display: inline-block;
+        }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: #dc3545; }
+
+        #mobile-menu-btn {
+            display: none; position: fixed; top: 15px; left: 15px; z-index: 2100; 
+            background-color: var(--sidebar-bg); color: #fff; border: 1px solid var(--border-color);
+            padding: 8px 16px; border-radius: 30px; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            font-size: 14px; font-weight: bold; cursor: pointer; transition: transform 0.2s, background 0.2s;
+            align-items: center; justify-content: center; gap: 6px;
+        }
+        #mobile-menu-btn:active { transform: scale(0.95); }
+        @media (min-width: 769px) { #mobile-menu-btn { display: none !important; } }
+
+        #mobile-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6); z-index: 2150; opacity: 0;
+            transition: opacity 0.3s; backdrop-filter: blur(2px);
+        }
+        #mobile-overlay.active { display: block; opacity: 1; }
+
+        .sidebar {
+            width: 340px; background-color: var(--sidebar-bg); padding: 20px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.3); display: flex; flex-direction: column;
+            gap: 15px; overflow-y: auto; flex-shrink: 0; z-index: 2000;
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .logo {
+            font-size: 1.5rem; font-weight: bold; margin-bottom: 5px; text-align: center;
+            color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;
+        }
+
+        .control-group {
+            display: flex; flex-direction: column; gap: 5px;
+            background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px;
+        }
+
+        label {
+            font-size: 0.9em; color: #ccc; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .val-display { font-family: monospace; color: var(--primary-color); font-weight: bold; }
+
+        select, input[type="file"], input[type="number"], input[type="text"], input[type="range"], button {
+            padding: 8px; border-radius: 4px; border: 1px solid var(--border-color);
+            background: var(--input-bg); color: white; width: 100%; box-sizing: border-box; font-size: 13px;
+        }
+
+        input[type="range"] { padding: 0; border: none; background: transparent; cursor: pointer; }
+        button { cursor: pointer; font-weight: bold; transition: 0.2s; }
+        
+        button.primary-btn {
+            background-color: var(--primary-color); border: none; padding: 12px;
+            margin-top: 5px; font-size: 14px;
+        }
+        button.primary-btn:hover { background-color: var(--primary-hover); }
+
+        .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+        .btn-full { grid-column: 1 / -1; }
+
+        button.action-btn { background-color: #444; border: 1px solid #666; }
+        button.download-btn { background-color: #e0a800; color: #000; border: none; }
+
+        #drop-zone {
+            border: 2px dashed var(--border-color); padding: 20px; text-align: center;
+            border-radius: 6px; background-color: #333; cursor: pointer;
+            transition: 0.2s; color: #aaa; font-size: 0.9rem;
+        }
+
+        .sidebar-footer {
+            margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-color); font-size: 0.9em;
+        }
+        .footer-info h6 { margin: 8px 0; font-size: 0.85rem; color: #bbb; font-weight: normal; line-height: 1.5; }
+        .footer-info a { color: var(--link-color) !important; text-decoration: none; }
+        .footer-info a:hover { text-decoration: underline; }
+
+        .iframe-wrapper {
+            margin-top: 10px; width: 100%; height: 120px; overflow: hidden; position: relative;
+        }
+
+        .main-content {
+            flex-grow: 1; padding: 40px; overflow: hidden; display: flex;
+            justify-content: center; align-items: flex-start; background-color: #000; 
+            transition: background-color 0.3s; position: relative;
+        }
+
+        #ascii-output {
+            font-family: 'Courier New', Courier, monospace; font-size: 10px; 
+            line-height: 1.0; white-space: pre; user-select: text;
+            width: auto; height: auto; transform-origin: top center;
+        }
+
+        #welcome-container {
+            width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; overflow: hidden;
+        }
+
+        /* 外部載入的內容會放在這裡 */
+        #welcome-art {
+            display: inline-block; transform-origin: center center; white-space: pre;
+            /* 預設隱藏，載入完成後顯示 */
+            opacity: 0; transition: opacity 0.5s;
+        }
+
+        @media (max-width: 768px) {
+            #mobile-menu-btn { display: flex !important; }
+            .sidebar { position: fixed; left: 0; top: 0; height: 100%; width: 300px; transform: translateX(-100%); z-index: 2200; }
+            .sidebar.active { transform: translateX(0); }
+            .main-content { padding: 60px 10px 20px 10px; width: 100%; }
+        }
+        
+        /* Loading 效果 */
+        .loading-text { color: #666; font-size: 14px; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+    </style>
+</head>
+<body>
+
+    <div id="toast-container"></div>
+    <div id="mobile-overlay" onclick="toggleSidebar(false)"></div>
+    <button id="mobile-menu-btn" onclick="toggleSidebar(true)">⚙️ 調整參數</button>
+
+    <aside class="sidebar" id="sidebar">
+        <div class="logo">img2txt-h v14.1</div>
+        <div id="drop-zone" onclick="document.getElementById('imageInput').click()">
+            <span style="font-size:24px">📁</span><br>點此上傳圖片
+            <input type="file" id="imageInput" accept="image/*" style="display:none">
+        </div>
+        <div class="control-group">
+            <label><span>解析度 (寬度字符)</span> <span id="widthVal" class="val-display">120</span></label>
+            <input type="number" id="widthInput" value="120" min="20" max="800" oninput="document.getElementById('widthVal').innerText = this.value">
+        </div>
+        <div class="control-group">
+            <label><span>輸出字號 (Font Size)</span> <span id="zoomVal" class="val-display">10px</span></label>
+            <input type="range" id="zoomInput" min="6" max="48" step="1" value="10" oninput="updateFontSize(this.value)">
+        </div>
+        <div class="control-group">
+            <label><span>長寬比修正</span> <span id="ratioVal" class="val-display">0.55</span></label>
+            <input type="range" id="ratioInput" min="0.3" max="1.0" step="0.01" value="0.55" oninput="document.getElementById('ratioVal').innerText = this.value">
+        </div>
+        <div class="control-group">
+            <label>抖動算法</label>
+            <select id="ditherAlgo">
+                <option value="fs" selected>Floyd-Steinberg (平衡)</option>
+                <option value="atkinson">Atkinson (高對比)</option>
+                <option value="stucki">Stucki (銳利)</option>
+                <option value="bayer">Bayer 4x4 (網格紋理)</option>
+                <option value="none">無 (None)</option>
+            </select>
+        </div>
+        <div class="control-group">
+            <label>字符風格</label>
+            <select id="charPreset" onchange="applyPreset()">
+                <option value="default" selected>標準詳細 ($@B%...)</option>
+                <option value="blocks">純塊狀 (█▓▒░)</option>
+                <option value="binary">黑客風格 (01)</option>
+                <option value="binary_inv">黑客風格 (10)</option>
+                <option value="simple">簡約 (. : - = + * # % @)</option>
+            </select>
+            <input type="text" id="customChars" style="margin-top:5px;" value="$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,&quot;^`'. ">
+        </div>
+        <div class="control-group" style="flex-direction: row; justify-content: space-between;">
+            <div style="display:flex; align-items:center;">
+                <input type="checkbox" id="colorCheck" checked style="width:auto; margin-right:8px;">
+                <span>彩色輸出</span>
+            </div>
+            <select id="bgMode" style="width: 100px;" onchange="updateBgMode()">
+                <option value="black">黑底</option>
+                <option value="white">白底</option>
+            </select>
+        </div>
+        <button class="primary-btn" onclick="generateAndClose()">重新生成 (Generate)</button>
+        <div class="btn-group">
+            <button class="action-btn" onclick="copyRichText()">複製富文本</button>
+            <button class="action-btn" onclick="copyHtmlSource()">複製 HTML</button>
+            <button class="download-btn btn-full" onclick="downloadAsImage()">下載圖片 (PNG)</button>
+        </div>
+        <div class="sidebar-footer">
+            <div class="footer-info">
+                <h6>聯繫：<a href="mailto:junelee220@gmail.com">junelee220#gmail.com</a></h6>
+                <h6>如果用起來覺得方便，<a href="https://raw.githubusercontent.com/ahr-calc/ahr-calc.github.io/master/for-donation.png" style="word-break: break-all;" target="_blank">歡迎打賞</a>。<br>或者<a href="bitcoin:bc1pdmgaut0lfjcgvwt9uh3erpwma5s576jrjlrrlu7w2w7p9v2qnusqsa7phx" style="word-break: break-all;">比特幣</a>。</h6> 
+            </div>
+            <div class="iframe-wrapper">
+                <iframe src="https://ahr-calc.github.io/for-donation-scan/02.html" style="width: 482px; height: 242px; border: none; transform: scale(0.45); transform-origin: top left; margin-bottom: -100px; display: block;" class="ascii-embed" scrolling="no" title="ASCII Art"></iframe>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content" id="mainContent">
+        <div id="ascii-output">
+            <div id="welcome-container">
+                <div id="welcome-loading" class="loading-text">Loading Art...</div>
+                
+                <div id="welcome-art"></div>
+            </div>
+        </div>
+    </main>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+    <canvas id="exportCanvas" style="display:none;"></canvas>
+
+    <script>
+        let currentFontSize = 10;
+        let rawAsciiText = ""; 
+        let rawHtmlBody = "";  
+        let currentBgIsWhite = false; 
+        let generatedData = null;
+
+        // [核心修改] 加載外部 XML/ASCII 代碼
+        function loadExternalAscii() {
+            // ============================================
+            // 請將此處的 URL 替換為您的真實地址
+            // 注意：該服務器必須允許 CORS (Access-Control-Allow-Origin: *)
+            // ============================================
+            const asciiUrl = 'https://github.com/ahr-calc/img2txth/ttl-ascii.xml'; 
+
+            const artContainer = document.getElementById('welcome-art');
+            const loading = document.getElementById('welcome-loading');
+
+            fetch(asciiUrl)
+                .then(response => {
+                    if (!response.ok) throw new Error("Network response was not ok");
+                    return response.text();
+                })
+                .then(data => {
+                    // 解析 XML 字符串
+                    const parser = new DOMParser();
+                    const xmlDoc = parser.parseFromString(data, "text/xml"); // 或者 text/html
+                    
+                    // 假設 xml 中有一個主要的 div 包含所有 span
+                    // 我們嘗試獲取第一個 div 的內容，或者直接使用整個 body
+                    // 根據您的 ttl-ascii.xml 結構，可能需要調整這裡的選取邏輯
+                    const content = xmlDoc.querySelector('div') ? xmlDoc.querySelector('div').outerHTML : data;
+
+                    // 注入內容
+                    artContainer.innerHTML = content;
+                    
+                    // 隱藏 Loading
+                    loading.style.display = 'none';
+                    artContainer.style.opacity = '1';
+
+                    // 觸發縮放
+                    resizeWelcome();
+                })
+                .catch(error => {
+                    console.error('Fetching ASCII failed:', error);
+                    loading.innerText = "欢迎使用img2txth v13b ASCII艺术生成器！";
+                    loading.style.color = "#dc3545";
+                });
+        }
+
+        function resizeWelcome() {
+            const container = document.getElementById('mainContent');
+            const art = document.getElementById('welcome-art');
+            if (!container || !art || art.innerHTML === "") return;
+
+            const availW = container.clientWidth - 40; 
+            const availH = container.clientHeight - 40;
+
+            art.style.transform = 'none';
+            // 因為是注入的，確保 inline-block 生效
+            const childDiv = art.querySelector('div');
+            if(childDiv) childDiv.style.display = "inline-block";
+
+            const artW = art.scrollWidth;
+            const artH = art.scrollHeight;
+
+            if (artW === 0 || artH === 0) return;
+
+            const scale = Math.min(availW / artW, availH / artH);
+            art.style.transform = `scale(${scale})`;
+        }
+
+        window.addEventListener('resize', resizeWelcome);
+        
+        // 頁面加載時執行抓取
+        window.addEventListener('load', () => {
+            loadExternalAscii();
+        });
+
+        // --- 以下為原有邏輯 ---
+
+        function toggleSidebar(show) {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            if (show) {
+                sidebar.classList.add('active');
+                overlay.classList.add('active');
+            } else {
+                sidebar.classList.remove('active');
+                overlay.classList.remove('active');
+            }
+        }
+
+        function generateAndClose() {
+            processImage();
+            if (window.innerWidth <= 768) toggleSidebar(false);
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<span>${message}</span>`;
+            container.appendChild(toast);
+            void toast.offsetWidth; toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 2500);
+        }
+
+        function updateFontSize(val) {
+            currentFontSize = val;
+            document.getElementById('zoomVal').innerText = val + "px";
+            const output = document.getElementById('ascii-output');
+            if (!document.getElementById('welcome-container')) {
+                output.style.fontSize = val + "px";
+            }
+        }
+
+        const PRESETS = {
+            'default': "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ",
+            'blocks': "█▓▒░ ", 'binary': "10 ", 'binary_inv': "01 ", 'simple': "@%#*+=-:. "
+        };
+        const BAYER_MATRIX_4x4 = [[0,8,2,10],[12,4,14,6],[3,11,1,9],[15,7,13,5]];
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('imageInput');
+
+        function applyPreset() {
+            const val = document.getElementById('charPreset').value;
+            if (PRESETS[val]) { document.getElementById('customChars').value = PRESETS[val]; processImage(); }
+        }
+
+        function updateBgMode() {
+            const mode = document.getElementById('bgMode').value;
+            const mainContent = document.getElementById('mainContent');
+            const output = document.getElementById('ascii-output');
+            if (mode === 'white') {
+                currentBgIsWhite = true; mainContent.style.backgroundColor = '#ffffff'; output.style.color = '#000000';
+            } else {
+                currentBgIsWhite = false; mainContent.style.backgroundColor = '#000000'; output.style.color = '#eeeeee';
+            }
+            processImage(); 
+        }
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'); });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault(); dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) { fileInput.files = e.dataTransfer.files; processImage(); if (window.innerWidth <= 768) toggleSidebar(false); }
+        });
+        fileInput.addEventListener('change', () => { processImage(); if (window.innerWidth <= 768) toggleSidebar(false); });
+
+        function getGray(r, g, b) { return 0.299 * r + 0.587 * g + 0.114 * b; }
+
+        function processImage() {
+            if (!fileInput.files || !fileInput.files[0]) return;
+            // 移除歡迎畫面
+            const welcome = document.getElementById('welcome-container');
+            if (welcome) { welcome.remove(); document.getElementById('mainContent').style.overflow = 'auto'; }
+
+            const widthInput = parseInt(document.getElementById('widthInput').value);
+            const ratioInput = parseFloat(document.getElementById('ratioInput').value);
+            const ditherAlgo = document.getElementById('ditherAlgo').value;
+            const useColor = document.getElementById('colorCheck').checked;
+            const customChars = document.getElementById('customChars').value;
+            const invertGray = currentBgIsWhite; 
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = () => generateAscii(img, widthInput, ratioInput, ditherAlgo, useColor, invertGray, customChars);
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+
+        function generateAscii(img, targetWidth, fontRatio, ditherAlgo, useColor, invertGray, charSet) {
+            const canvas = document.getElementById('canvas'); const ctx = canvas.getContext('2d'); const output = document.getElementById('ascii-output');
+            const w = targetWidth; const h = Math.floor((w / img.width) * img.height * fontRatio);
+            canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
+            const imageData = ctx.getImageData(0, 0, w, h); const data = imageData.data;
+            let luminance = new Float32Array(w * h);
+            for (let i = 0; i < w * h; i++) {
+                let gray = getGray(data[i*4], data[i*4+1], data[i*4+2]);
+                if (invertGray) gray = 255 - gray; luminance[i] = gray;
+            }
+            const rampLen = charSet.length;
+            if (ditherAlgo === 'bayer') {
+                const bayerFactor = 40.0; 
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = y * w + x; const matrixValue = BAYER_MATRIX_4x4[y % 4][x % 4];
+                        const offset = ((matrixValue / 15.0) - 0.5) * bayerFactor; luminance[idx] = Math.max(0, Math.min(255, luminance[idx] + offset));
+                    }
+                }
+            } else if (ditherAlgo !== 'none') {
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = y * w + x; const oldVal = luminance[idx];
+                        const rampIndex = Math.floor(Math.max(0, Math.min(255, oldVal)) / 255 * (rampLen - 1));
+                        const newVal = (rampIndex / (rampLen - 1)) * 255; const error = oldVal - newVal;
+                        const distribute = (dx, dy, fraction) => {
+                            if (x + dx >= 0 && x + dx < w && y + dy < h) { luminance[idx + dy * w + dx] += error * fraction; }
+                        };
+                        if (ditherAlgo === 'fs') { distribute(1,0,7/16); distribute(-1,1,3/16); distribute(0,1,5/16); distribute(1,1,1/16); }
+                        else if (ditherAlgo === 'atkinson') { const e = 1/8; distribute(1,0,e); distribute(2,0,e); distribute(-1,1,e); distribute(0,1,e); distribute(1,1,e); distribute(0,2,e); }
+                        else if (ditherAlgo === 'stucki') { const s = 1/42; distribute(1,0,8*s); distribute(2,0,4*s); distribute(-2,1,2*s); distribute(-1,1,4*s); distribute(0,1,8*s); distribute(1,1,4*s); distribute(2,1,2*s); distribute(-2,2,1*s); distribute(-1,2,2*s); distribute(0,2,4*s); distribute(1,2,2*s); distribute(2,2,1*s); }
+                    }
+                }
+            }
+            let htmlParts = []; let asciiParts = [];
+            generatedData = { width: w, height: h, charGrid: [], colorGrid: [], bgColor: currentBgIsWhite ? '#ffffff' : '#000000' };
+            for (let y = 0; y < h; y++) {
+                let lineHtml = ""; let rowChars = []; let rowColors = [];
+                for (let x = 0; x < w; x++) {
+                    const idx = y * w + x; let gray = Math.max(0, Math.min(255, luminance[idx]));
+                    const charIndex = Math.floor((1 - (gray / 255)) * (rampLen - 1)); let char = charSet[charIndex] || " ";
+                    rowChars.push(char); asciiParts.push(char);
+                    let displayChar = char;
+                    if (char === " ") displayChar = "&nbsp;"; else if (char === "<") displayChar = "&lt;"; else if (char === ">") displayChar = "&gt;"; else if (char === '"') displayChar = "&quot;"; else if (char === "&") displayChar = "&amp;";
+                    if (useColor) {
+                        const r = data[idx * 4]; const g = data[idx * 4 + 1]; const b = data[idx * 4 + 2]; const colorStr = `rgb(${r},${g},${b})`;
+                        rowColors.push(colorStr); lineHtml += `<span style="color:${colorStr}">${displayChar}</span>`;
+                    } else {
+                        const monoColor = currentBgIsWhite ? '#000' : '#fff'; rowColors.push(monoColor); lineHtml += displayChar;
+                    }
+                }
+                generatedData.charGrid.push(rowChars); generatedData.colorGrid.push(rowColors); htmlParts.push(lineHtml + "<br>"); asciiParts.push("\n");
+            }
+            rawHtmlBody = htmlParts.join(""); rawAsciiText = asciiParts.join("");
+            output.innerHTML = rawHtmlBody; output.style.fontSize = currentFontSize + "px";
+        }
+
+        async function copyRichText() {
+            if (!rawHtmlBody) return showToast("請先生成圖片！", "error");
+            const bgColor = currentBgIsWhite ? '#ffffff' : '#000000'; const textColor = currentBgIsWhite ? '#000000' : '#ffffff';
+            const fullHtml = `<div style="background-color: ${bgColor}; color: ${textColor}; font-family: 'Courier New', Courier, monospace; font-size: ${currentFontSize}px; line-height: 1.0; white-space: pre; display: inline-block; padding: 10px; border-radius: 5px;">${rawHtmlBody}</div>`;
+            try {
+                const blobHtml = new Blob([fullHtml], { type: 'text/html' }); const blobText = new Blob([rawAsciiText], { type: 'text/plain' });
+                await navigator.clipboard.write([new ClipboardItem({'text/html': blobHtml, 'text/plain': blobText})]); showToast(`已複製！(字號: ${currentFontSize}px)`);
+            } catch (err) { showToast("複製失敗，請檢查瀏覽器權限", "error"); }
+        }
+
+        function copyHtmlSource() {
+            if (!rawHtmlBody) return showToast("請先生成圖片！", "error");
+            const bgColor = currentBgIsWhite ? '#ffffff' : '#000000'; const textColor = currentBgIsWhite ? '#000000' : '#ffffff';
+            const wrapperStart = `<div style="background-color: ${bgColor}; color: ${textColor}; font-family: 'Courier New', Courier, monospace; font-size: ${currentFontSize}px; line-height: 1.0; white-space: pre; display: inline-block; padding: 10px; border-radius: 5px;">`;
+            const finalHtml = wrapperStart + "\n" + rawHtmlBody + "\n</div>";
+            navigator.clipboard.writeText(finalHtml).then(() => showToast(`HTML 代碼已複製！(字號: ${currentFontSize}px)`));
+        }
+
+        function downloadAsImage() {
+            if (!generatedData) return showToast("請先生成圖片！", "error");
+            const exportCanvas = document.getElementById('exportCanvas'); const ctx = exportCanvas.getContext('2d');
+            const fontSize = 12; const lineHeight = fontSize; const fontFamily = 'Courier New, monospace'; const charWidth = fontSize * 0.6; 
+            const canvasWidth = Math.ceil(generatedData.width * charWidth) + 40; const canvasHeight = Math.ceil(generatedData.height * lineHeight) + 40;
+            exportCanvas.width = canvasWidth; exportCanvas.height = canvasHeight;
+            ctx.fillStyle = generatedData.bgColor; ctx.fillRect(0, 0, canvasWidth, canvasHeight);
+            ctx.font = `${fontSize}px ${fontFamily}`; ctx.textBaseline = 'top';
+            const grid = generatedData.charGrid; const colors = generatedData.colorGrid;
+            for (let y = 0; y < grid.length; y++) {
+                for (let x = 0; x < grid[y].length; x++) { ctx.fillStyle = colors[y][x]; ctx.fillText(grid[y][x], 20 + (x * charWidth), 20 + (y * lineHeight)); }
+            }
+            const link = document.createElement('a'); link.download = 'ascii-art.png'; link.href = exportCanvas.toDataURL('image/png'); link.click(); showToast("圖片下載已開始");
+        }
+    </script>
+</body>
+</html>
