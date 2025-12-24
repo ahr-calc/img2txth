@@ -102,11 +102,11 @@
         .sidebar {
             width: 340px;
             background-color: var(--sidebar-bg);
-            padding: 20px;
+            padding: 5px;
             box-shadow: 2px 0 10px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 5px;
             overflow-y: auto;
             flex-shrink: 0;
             z-index: 2000;
@@ -126,34 +126,36 @@
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
-            background: rgba(0,0,0,0.2);
-            padding: 10px;
+            gap: 2px;
+            background: rgba(0,0,0,0.15);
+            padding: 6px 10px;
             border-radius: 6px;
         }
 
         label {
-            font-size: 0.9em;
+            font-size: 0.85em;
             color: #ccc;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            margin-bottom: 2px;
         }
 
         .val-display { font-family: monospace; color: var(--primary-color); font-weight: bold; }
 
         select, input[type="file"], input[type="number"], input[type="text"], input[type="range"], button {
-            padding: 8px;
+            padding: 4px 6px;
             border-radius: 4px;
             border: 1px solid var(--border-color);
             background: var(--input-bg);
             color: white;
             width: 100%;
+
             box-sizing: border-box;
             font-size: 13px;
         }
 
-        input[type="range"] { padding: 0; border: none; background: transparent; cursor: pointer; }
+        input[type="range"] { padding: 0; border: none; background: transparent; cursor: pointer; margin: 4px 0; }
         button { cursor: pointer; font-weight: bold; transition: 0.2s; }
         
         button.primary-btn {
@@ -177,21 +179,31 @@
         button.download-btn { background-color: #e0a800; color: #000; border: none; }
 
         #drop-zone {
-            border: 2px dashed var(--border-color);
-            padding: 20px;
+            border: 1px dashed var(--border-color);
+            padding: 10px;
             text-align: center;
+            align-items: center;
+            justify-content: center;
             border-radius: 6px;
             background-color: #333;
             cursor: pointer;
             transition: 0.2s;
             color: #aaa;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            display: flex;
+            gap: 10px;
         }
+        #drop-zone span { font-size: 18px !important; }
+        .compact-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 两列等宽 */
+    gap: 8px;
+}
 
         /* --- 底部资讯与 Iframe --- */
         .sidebar-footer {
             margin-top: auto; 
-            padding-top: 20px;
+            padding-top: 10px;
             border-top: 1px solid var(--border-color);
             font-size: 0.9em;
         }
@@ -211,9 +223,9 @@
         .footer-info a:hover { text-decoration: underline; }
 
         .iframe-wrapper {
-            margin-top: 10px;
+            margin-top: 5px;
             width: 100%;
-            height: 120px; 
+            height: 80px; 
             overflow: hidden; 
             position: relative;
         }
@@ -347,47 +359,74 @@
     <aside class="sidebar" id="sidebar">
         <div class="logo">img2txt-h v0.13b</div>
 
-        <div id="drop-zone" onclick="document.getElementById('imageInput').click()">
-            <span style="font-size:24px">📁</span><br>点此上传图片
-            <input type="file" id="imageInput" accept="image/*" style="display:none">
-        </div>
+<div id="drop-zone" onclick="document.getElementById('imageInput').click()">
+    <span>📁</span> 点击或拖拽上传图片
+    <input type="file" id="imageInput" accept="image/*" style="display:none">
+</div>
         
-        <div class="control-group">
-            <label><span>解析度 (宽度字符)</span> <span id="widthVal" class="val-display">120</span></label>
-            <input type="number" id="widthInput" value="120" min="20" max="800" oninput="document.getElementById('widthVal').innerText = this.value">
+<div class="compact-row">
+    <div class="control-group">
+        <label>宽度 <span id="widthVal" class="val-display">120</span></label>
+        <input type="number" id="widthInput" value="120" min="20" max="800" oninput="document.getElementById('widthVal').innerText = this.value">
+    </div>
+    <div class="control-group">
+        <label>输出字号 <span id="zoomVal" class="val-display">10px</span></label>
+        <input type="number" id="zoomInputNum" value="10" min="1" max="88" oninput="updateFontSize(this.value); document.getElementById('zoomInput').value=this.value">
         </div>
+</div>
+<input type="range" id="zoomInput" min="2" max="88" step="1" value="10" style="display:none" oninput="updateFontSize(this.value)"> 
 
-        <div class="control-group">
-            <label><span>输出字号 (Font Size)</span> <span id="zoomVal" class="val-display">10px</span></label>
-            <input type="range" id="zoomInput" min="2" max="88" step="1" value="10" oninput="updateFontSize(this.value)">
-        </div>
 
-        <div class="control-group">
-            <label><span>长宽比修正</span> <span id="ratioVal" class="val-display">0.55</span></label>
-            <input type="range" id="ratioInput" min="0.3" max="1.0" step="0.01" value="0.55" oninput="document.getElementById('ratioVal').innerText = this.value">
-        </div>
+<div class="compact-row">
+    <div class="control-group">
+        <label>长宽比 <span id="ratioVal" class="val-display">0.55</span></label>
+        <input type="range" id="ratioInput" min="0.3" max="1.0" step="0.01" value="0.55" oninput="document.getElementById('ratioVal').innerText = this.value" style="width:100%">
+    </div>
+    <div class="control-group">
+        <label>抖动算法</label>
+        <select id="ditherAlgo" style="width:100%">
+            <option value="fs">Floyd-Steinberg平衡</option> 
+            <option value="atkinson">Atkinson高比</option>
+            <option value="stucki">Stucki锐利</option>
+            <option value="bayer">Bayer网纹</option>
+            <option value="none">None无</option>
+        </select>
+    </div>
+</div>
 
-        <div class="control-group">
-            <label>抖动算法</label>
-            <select id="ditherAlgo">
-                <option value="fs" selected>Floyd-Steinberg (平衡)</option>
-                <option value="atkinson">Atkinson (高对比)</option>
-                <option value="stucki">Stucki (锐利)</option>
-                <option value="bayer">Bayer 4x4 (网格纹理)</option>
-                <option value="none">无 (None)</option>
-            </select>
-        </div>
+<div class="control-group" style="flex-direction: row; align-items: center; justify-content: space-between; padding: 4px 10px;">
+    <label for="edgeCheck" style="margin:0; cursor:pointer;">边缘检测</label>
+    <input type="checkbox" id="edgeCheck" style="width:auto; margin:0;" onchange="processImage()">
+</div>
+
+<div class="control-group" id="edgeThresholdGroup" style="display:none; padding-bottom:0;">
+    <label style="margin-bottom:0;">敏感度 <span id="edgeVal" class="val-display">30</span></label>
+    <input type="range" id="edgeInput" min="10" max="100" step="1" value="30" oninput="document.getElementById('edgeVal').innerText = this.value; processImage()">
+</div>
 
         <div class="control-group">
             <label>字符风格</label>
             <select id="charPreset" onchange="applyPreset()">
-                <option value="default" selected>标准详细 ($@B%...)</option>
-                <option value="blocks">纯块状 (█▓▒░)</option>
-                <option value="binary">黑客风格 (01)</option>
-                <option value="binary_inv">黑客风格 (10)</option>
-                <option value="simple">简约 (. : - = + * # % @)</option>
+    <option value="default" selected>标准详细 ($@B%...)</option>
+    <option value="fine_blocks">细腻块状 (█▇▆▅...)</option>
+    <option value="blocks">纯块状 (█▓▒░)</option>
+    <option value="japanese">日式半角 (Half-width Kana)</option>
+    <option value="matrix">数字矩阵 (Matrix Code)</option>
+    <option value="sketch">素描笔触 (Crosshatch)</option>
+    <option value="glitch">故障艺术 (Glitch)</option>
+    <option value="deep">深邃高反差 (Deep Contrast)</option>
+    <option value="binary">二进制 (01)</option>
+    <option value="binary_inv">二进制 (10)</option>
+    <option value="simple">简约 (. : - = + * # % @)</option>
+    <option value="random">🎲 随机混合 (Chaos Mix)</option>
+    <option value="structure">📐 线构纹理 (Structure & Curves)</option>
+    <option value="schematic">🏗️ 工程制图 (Box Drawing)</option>
+    <option value="geometric">几何图形 (Shapes)</option>
+    <option value="borders">迷之边框 (Heavy Box)</option>
+    <option value="diagonals">曲线斜线 (Curves)</option>
+    <option value="full_set">符号边角料</option>
             </select>
-            <input type="text" id="customChars" style="margin-top:5px;" value="$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,&quot;^`'. ">
+            <input type="text" id="customChars" style="margin-top:4px;font-family: monospace; letter-spacing: 1px;" value="$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\|()1{}[]?-_+~<>i!lI;:,&quot;^`'. ">
         </div>
 
         <div class="control-group" style="flex-direction: row; justify-content: space-between;">
@@ -481,10 +520,21 @@
             }
         }
 
-        function generateAndClose() {
-            processImage();
-            if (window.innerWidth <= 768) toggleSidebar(false);
-        }
+function generateAndClose() {
+    const presetSelect = document.getElementById('charPreset');
+    
+    // [关键点] 如果当前是随机模式，点击按钮时强制刷新随机串
+    if (presetSelect.value === 'random') {
+        const newRandomChars = createRandomGradient();
+        document.getElementById('customChars').value = newRandomChars;
+        // 稍微提示一下用户字符变了
+        console.log("Random chars refreshed:", newRandomChars);
+    }
+
+    processImage();
+    
+    if (window.innerWidth <= 768) toggleSidebar(false);
+}
 
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
@@ -505,6 +555,9 @@
         function updateFontSize(val) {
             currentFontSize = val;
             document.getElementById('zoomVal').innerText = val + "px";
+            if(document.getElementById('zoomInputNum')) {
+        document.getElementById('zoomInputNum').value = val;
+    }
             const output = document.getElementById('ascii-output');
             // 防止调整滑杆时把欢迎画面弄乱
             if (!output.querySelector('.placeholder-wrapper')) {
@@ -513,11 +566,42 @@
         }
 
         const PRESETS = {
-            'default': "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ",
-            'blocks': "█▓▒░ ", 
-            'binary': "10 ",   
-            'binary_inv': "01 ",
-            'simple': "@%#*+=-:. "
+    // 默认：平衡的 69 级灰度
+    'default': "$@B%8&WM#*oahkbdpqwmZO0QLCJUYXzcvunxrjft/\\|()1{}[]?-_+~<>i!lI;:,\"^`'. ",
+    
+    // 细腻块状：使用 Unicode 垂直块元素，从全满到空白，过渡非常平滑
+    'fine_blocks': "█▇▆▅▄▃▂  ",
+    
+    // 纯块状：原来的块状风格
+    'blocks': "█▓▒░ ", 
+    
+    // 日式半角：模拟半角片假名（Matrix 电影雨滴效果也常用类似字符），科技感强
+    'japanese': "ﾘｨｲｩｴｫｯｰｱｶｷｸｹｺｻｼｽｾｿﾀﾁﾂﾃﾄﾅﾆﾇﾈﾉﾊﾋﾌﾍﾎﾏﾐﾑﾒﾓﾔﾕﾖﾗﾙﾚﾛﾜﾝ1234567890:. ",
+    
+    // 数字矩阵：十六进制风格，适合黑底绿字
+    'matrix': "800813579ACEF01011 ",
+    
+    // 素描笔触：使用交叉线条模拟素描阴影 (X, #, /, \)
+    'sketch': "##XX==++//--..  ",
+    
+    // 故障艺术：混合特殊符号，制造数据损坏的视觉感
+    'glitch': "¶§▓▒░$ØÆ¥?¿!¡|/;:,. ",
+    
+    // 深邃高反差：重复字符以减少中间色调，产生类似剪影或版画的效果
+    'deep': "████▓▓▓▓▒▒▒▒░░░░++++----....    ",
+    
+    // 二进制
+    'binary': "101001 ",   
+    'binary_inv': "010110 ",
+    
+    // 简约
+    'simple': "@%#*+=-:. ",
+    'structure': "@#8&WMX/\\|(){}[]?-_+~<>*!;:,\"^`'. ",
+    'schematic': "█▓▒░╬╫╪╩╨╧╤╥╙╘╓╒║│─.. ",
+    'geometric': "█▓▲▼●◢◣◤◥★〒㊣◆▒◎○□△▽◇░  ",
+    'borders': "█▓▒╬╫╪╠╡╢╣╤╥╦╧╨╩╔╗╚╝║═╞╟╠╡│┤┐└┴┬┼─░  ",
+    'diagonals': "█▓▒╳╱╲╭╮╯╰  ",
+    'full_set': "█▓▀▄▌▐●◢◣◤◥★㊣〒╬╫╪▒▲▼╔╗╚╝╠╣╦╩═║╭╮╯╰╱╲╳◎○□△▽◇░┌┐└┘├┤┬┴†※  "
         };
 
         const BAYER_MATRIX_4x4 = [
@@ -527,13 +611,40 @@
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('imageInput');
 
-        function applyPreset() {
-            const val = document.getElementById('charPreset').value;
-            if (PRESETS[val]) {
-                document.getElementById('customChars').value = PRESETS[val];
-                processImage(); 
-            }
-        }
+function createRandomGradient() {
+    // 获取除 random 以外的所有预设 key
+    const keys = Object.keys(PRESETS).filter(k => k !== 'random');
+    const targetLength = 64; // 目标梯度长度
+    let result = "";
+
+    for (let i = 0; i < targetLength; i++) {
+        // A. 随机选一个预设风格
+        const randomKey = keys[Math.floor(Math.random() * keys.length)];
+        const sourceStr = PRESETS[randomKey];
+
+        // B. 根据当前 i 的位置，去选对应风格里相同亮度的字符
+        // 这样保证了混合后的字符串依然是从黑到白的有序排列
+        const progress = i / targetLength;
+        const sourceIndex = Math.floor(progress * sourceStr.length);
+        
+        result += sourceStr[sourceIndex] || sourceStr[sourceStr.length - 1];
+    }
+    return result;
+}
+
+// 2. 修改后的应用函数
+function applyPreset() {
+    const val = document.getElementById('charPreset').value;
+    
+    if (val === 'random') {
+        // 第一次切换到 Random 时，生成一个初始值
+        document.getElementById('customChars').value = createRandomGradient();
+        showToast("随机模式：点击「重新生成」可刷新字符组合");
+    } else if (PRESETS[val]) {
+        document.getElementById('customChars').value = PRESETS[val];
+    }
+    processImage(); 
+}
 
         function updateBgMode() {
             const mode = document.getElementById('bgMode').value;
@@ -592,124 +703,279 @@
             reader.readAsDataURL(fileInput.files[0]);
         }
 
-        function generateAscii(img, targetWidth, fontRatio, ditherAlgo, useColor, invertGray, charSet) {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            const output = document.getElementById('ascii-output');
+/* ============================================================
+   放在 script 标签内的 generateAscii 函数，请完全替换旧版本
+   ============================================================ */
+function generateAscii(img, targetWidth, fontRatio, ditherAlgo, useColor, invertGray, charSet) {
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const output = document.getElementById('ascii-output');
 
-            const w = targetWidth;
-            const h = Math.floor((w / img.width) * img.height * fontRatio);
-            
-            canvas.width = w;
-            canvas.height = h;
-            ctx.drawImage(img, 0, 0, w, h);
+    // 1. 获取边缘检测开关和阈值
+    const useEdge = document.getElementById('edgeCheck').checked;
+    const edgeThreshold = parseInt(document.getElementById('edgeInput').value) || 30;
 
-            const imageData = ctx.getImageData(0, 0, w, h);
-            const data = imageData.data;
+    // 控制 UI 显示/隐藏 (放到这里顺手处理，或者放在 onchange 里)
+    document.getElementById('edgeThresholdGroup').style.display = useEdge ? 'flex' : 'none';
 
-            let luminance = new Float32Array(w * h);
-            for (let i = 0; i < w * h; i++) {
-                let gray = getGray(data[i*4], data[i*4+1], data[i*4+2]);
-                if (invertGray) gray = 255 - gray;
-                luminance[i] = gray;
-            }
+    // 2. 调整画布大小
+    const w = targetWidth;
+    const h = Math.floor((w / img.width) * img.height * fontRatio);
+    
+    canvas.width = w;
+    canvas.height = h;
+    ctx.drawImage(img, 0, 0, w, h);
 
-            const rampLen = charSet.length;
-            if (ditherAlgo === 'bayer') {
-                const bayerFactor = 40.0; 
-                for (let y = 0; y < h; y++) {
-                    for (let x = 0; x < w; x++) {
-                        const idx = y * w + x;
-                        const matrixValue = BAYER_MATRIX_4x4[y % 4][x % 4];
-                        const offset = ((matrixValue / 15.0) - 0.5) * bayerFactor;
-                        luminance[idx] = Math.max(0, Math.min(255, luminance[idx] + offset));
-                    }
+    const imageData = ctx.getImageData(0, 0, w, h);
+    const data = imageData.data;
+
+    // 3. 准备亮度数组 (Sobel 需要先转灰度)
+    // 注意：如果是边缘检测模式，我们不反转灰度，因为我们需要计算原始梯度
+    let luminance = new Float32Array(w * h);
+    for (let i = 0; i < w * h; i++) {
+        // 标准灰度公式
+        luminance[i] = 0.299 * data[i*4] + 0.587 * data[i*4+1] + 0.114 * data[i*4+2];
+    }
+
+    /* ---------------------------------------------------------
+       分支 A: 边缘检测模式 (Sobel Operator)
+       --------------------------------------------------------- */
+    if (useEdge) {
+        generatedData = {
+            width: w,
+            height: h,
+            charGrid: [],
+            colorGrid: [],
+            bgColor: currentBgIsWhite ? '#ffffff' : '#000000'
+        };
+
+        let htmlParts = [];
+        let asciiParts = [];
+
+        // Sobel 卷积核 (用于检测横向和纵向变化)
+        // Gx 检测竖线, Gy 检测横线
+        for (let y = 0; y < h; y++) {
+            let lineHtml = "";
+            let rowChars = [];
+            let rowColors = [];
+
+            for (let x = 0; x < w; x++) {
+                // 处理边界，边界默认为空
+                if (x === 0 || x === w - 1 || y === 0 || y === h - 1) {
+                    rowChars.push(" ");
+                    rowColors.push(generatedData.bgColor);
+                    lineHtml += "&nbsp;";
+                    continue;
                 }
-            } else if (ditherAlgo !== 'none') {
-                for (let y = 0; y < h; y++) {
-                    for (let x = 0; x < w; x++) {
-                        const idx = y * w + x;
-                        const oldVal = luminance[idx];
-                        const rampIndex = Math.floor(Math.max(0, Math.min(255, oldVal)) / 255 * (rampLen - 1));
-                        const newVal = (rampIndex / (rampLen - 1)) * 255;
-                        const error = oldVal - newVal;
-                        
-                        const distribute = (dx, dy, fraction) => {
-                            if (x + dx >= 0 && x + dx < w && y + dy < h) {
-                                luminance[idx + dy * w + dx] += error * fraction;
-                            }
-                        };
-                        
-                        if (ditherAlgo === 'fs') {
-                            distribute(1,0,7/16); distribute(-1,1,3/16); distribute(0,1,5/16); distribute(1,1,1/16);
-                        } else if (ditherAlgo === 'atkinson') {
-                            const e = 1/8;
-                            distribute(1,0,e); distribute(2,0,e); distribute(-1,1,e); distribute(0,1,e); distribute(1,1,e); distribute(0,2,e);
-                        } else if (ditherAlgo === 'stucki') {
-                            const s = 1/42;
-                            distribute(1,0,8*s); distribute(2,0,4*s); distribute(-2,1,2*s); distribute(-1,1,4*s); distribute(0,1,8*s); distribute(1,1,4*s); distribute(2,1,2*s); distribute(-2,2,1*s); distribute(-1,2,2*s); distribute(0,2,4*s); distribute(1,2,2*s); distribute(2,2,1*s);
-                        }
-                    }
-                }
-            }
 
-            let htmlParts = []; 
-            let asciiParts = [];
-            
-            generatedData = {
-                width: w,
-                height: h,
-                charGrid: [],
-                colorGrid: [],
-                bgColor: currentBgIsWhite ? '#ffffff' : '#000000'
-            };
+                // 提取周围 3x3 像素的亮度
+                // TL T TR
+                // L  C  R
+                // BL B BR
+                const idx = y * w + x;
+                const tl = luminance[idx - w - 1];
+                const t  = luminance[idx - w];
+                const tr = luminance[idx - w + 1];
+                const l  = luminance[idx - 1];
+                const r  = luminance[idx + 1];
+                const bl = luminance[idx + w - 1];
+                const b  = luminance[idx + w];
+                const br = luminance[idx + w + 1];
 
-            for (let y = 0; y < h; y++) {
-                let lineHtml = "";
-                let rowChars = [];
-                let rowColors = [];
+                // Sobel 计算公式
+                const gx = -tl - 2*l - bl + tr + 2*r + br;
+                const gy = -tl - 2*t - tr + bl + 2*b + br;
+
+                // 梯度幅值 (变化有多剧烈)
+                const mag = Math.sqrt(gx * gx + gy * gy);
+
+                let char = " ";
                 
-                for (let x = 0; x < w; x++) {
-                    const idx = y * w + x;
-                    let gray = Math.max(0, Math.min(255, luminance[idx]));
-                    const charIndex = Math.floor((1 - (gray / 255)) * (rampLen - 1));
-                    let char = charSet[charIndex] || " ";
+                // 如果变化强度超过阈值，说明这里有边
+                if (mag > edgeThreshold) {
+    const angle = Math.atan2(gy, gx) * (180 / Math.PI);
+    const absAngle = Math.abs(angle);
 
-                    rowChars.push(char);
-                    asciiParts.push(char);
+    if (absAngle < 22.5 || absAngle > 157.5) {
+        char = "│"; // 使用制表符竖线，比 | 更连贯
+    } else if (absAngle > 67.5 && absAngle < 112.5) {
+        char = "─"; // 使用制表符横线，比 - 更连贯
+    } else if (angle > 0) {
+        char = "╲"; // [新] 使用 Box Drawing Diagonals
+    } else {
+        char = "╱"; // [新] 使用 Box Drawing Diagonals
+    }
+    
+    // 增强模式
+    if (mag > edgeThreshold * 3) {
+         if (char === '│') char = '║'; // 双线竖
+         if (char === '─') char = '═'; // 双线横
+         if (char === '╱' || char === '╲') char = '╳'; // 交叉
+    }
+}
 
-                    let displayChar = char;
-                    if (char === " ") displayChar = "&nbsp;";
-                    else if (char === "<") displayChar = "&lt;";
-                    else if (char === ">") displayChar = "&gt;";
-                    else if (char === '"') displayChar = "&quot;";
-                    else if (char === "&") displayChar = "&amp;";
-
+                // 颜色处理：如果勾选彩色，且是边缘，则保留原色
+                // 否则使用单色
+                let colorStr = "";
+                if (char !== " ") {
                     if (useColor) {
-                        const r = data[idx * 4];
-                        const g = data[idx * 4 + 1];
-                        const b = data[idx * 4 + 2];
-                        const colorStr = `rgb(${r},${g},${b})`;
-                        rowColors.push(colorStr);
-                        lineHtml += `<span style="color:${colorStr}">${displayChar}</span>`;
+                        // 稍微增强一下边缘的颜色饱和度
+                        const rVal = data[idx*4];
+                        const gVal = data[idx*4+1];
+                        const bVal = data[idx*4+2];
+                        colorStr = `rgb(${rVal},${gVal},${bVal})`;
                     } else {
-                        const monoColor = currentBgIsWhite ? '#000' : '#fff';
-                        rowColors.push(monoColor);
-                        lineHtml += displayChar;
+                        colorStr = currentBgIsWhite ? '#000000' : '#ffffff';
                     }
+                } else {
+                    colorStr = currentBgIsWhite ? '#ffffff' : '#000000';
                 }
+
+                // 存入数据
+                rowChars.push(char);
+                asciiParts.push(char);
+                rowColors.push(colorStr);
+
+                // HTML 转义
+                let displayChar = char;
+                if (displayChar === " ") displayChar = "&nbsp;";
+                if (displayChar === "<") displayChar = "&lt;";
+                if (displayChar === ">") displayChar = "&gt;";
                 
-                generatedData.charGrid.push(rowChars);
-                generatedData.colorGrid.push(rowColors);
-                htmlParts.push(lineHtml + "<br>");
-                asciiParts.push("\n");
+                lineHtml += `<span style="color:${colorStr}">${displayChar}</span>`;
             }
-            
-            rawHtmlBody = htmlParts.join("");
-            rawAsciiText = asciiParts.join("");
-            output.innerHTML = rawHtmlBody;
-            output.style.fontSize = currentFontSize + "px";
+            generatedData.charGrid.push(rowChars);
+            generatedData.colorGrid.push(rowColors);
+            htmlParts.push(lineHtml + "<br>");
+            asciiParts.push("\n");
         }
+
+        rawHtmlBody = htmlParts.join("");
+        rawAsciiText = asciiParts.join("");
+        output.innerHTML = rawHtmlBody;
+        output.style.fontSize = currentFontSize + "px";
+        return; // 边缘检测模式结束，直接返回
+    }
+
+    /* ---------------------------------------------------------
+       分支 B: 标准亮度映射模式 (原有的逻辑)
+       --------------------------------------------------------- */
+    
+    // 如果没有反转灰度（通常黑底白字时需要反转，越亮越白），这里处理一下
+    // 注意：上面的 luminance 是原始亮度。
+    // 旧代码逻辑里，invertGray = currentBgIsWhite。
+    // 如果是白底(true)，我们希望黑字(0)，所以亮度高(255)的地方应该是空白(index大)。
+    // 这里保持旧代码逻辑：
+    if (invertGray) {
+        for(let i=0; i<w*h; i++) luminance[i] = 255 - luminance[i];
+    }
+
+    // --- 这里的代码就是原本的 Dithering 和 Char Mapping 逻辑 ---
+    // 为了节省篇幅，这里复用你原有的代码逻辑，只需要把上面的 Sobel 块插在原本逻辑之前
+    // 下面是原有的 Dithering + Mapping 代码：
+    
+    const rampLen = charSet.length;
+
+    // ... (此处保留原有的 Bayer / Floyd-Steinberg 抖动代码) ...
+    // 为确保完整性，我简写如下，请保留你原本的抖动逻辑块
+    if (ditherAlgo === 'bayer') {
+        // ... Bayer 逻辑 ...
+        const bayerFactor = 40.0; 
+        for (let y = 0; y < h; y++) {
+             for (let x = 0; x < w; x++) {
+                 const idx = y * w + x;
+                 const matrixValue = BAYER_MATRIX_4x4[y % 4][x % 4];
+                 const offset = ((matrixValue / 15.0) - 0.5) * bayerFactor;
+                 luminance[idx] = Math.max(0, Math.min(255, luminance[idx] + offset));
+             }
+        }
+    } else if (ditherAlgo !== 'none') {
+        // ... FS / Atkinson / Stucki 逻辑 ...
+        // 请保留原有的 distribute 函数和循环
+        for (let y = 0; y < h; y++) {
+            for (let x = 0; x < w; x++) {
+                const idx = y * w + x;
+                const oldVal = luminance[idx];
+                const rampIndex = Math.floor(Math.max(0, Math.min(255, oldVal)) / 255 * (rampLen - 1));
+                const newVal = (rampIndex / (rampLen - 1)) * 255;
+                const error = oldVal - newVal;
+                
+                const distribute = (dx, dy, fraction) => {
+                    if (x + dx >= 0 && x + dx < w && y + dy < h) {
+                        luminance[idx + dy * w + dx] += error * fraction;
+                    }
+                };
+                
+                if (ditherAlgo === 'fs') {
+                    distribute(1,0,7/16); distribute(-1,1,3/16); distribute(0,1,5/16); distribute(1,1,1/16);
+                } else if (ditherAlgo === 'atkinson') {
+                    const e = 1/8;
+                    distribute(1,0,e); distribute(2,0,e); distribute(-1,1,e); distribute(0,1,e); distribute(1,1,e); distribute(0,2,e);
+                } else if (ditherAlgo === 'stucki') {
+                    const s = 1/42;
+                    distribute(1,0,8*s); distribute(2,0,4*s); distribute(-2,1,2*s); distribute(-1,1,4*s); distribute(0,1,8*s); distribute(1,1,4*s); distribute(2,1,2*s); distribute(-2,2,1*s); distribute(-1,2,2*s); distribute(0,2,4*s); distribute(1,2,2*s); distribute(2,2,1*s);
+                }
+            }
+        }
+    }
+
+    // Mapping 循环
+    let htmlParts = []; 
+    let asciiParts = [];
+    generatedData = {
+        width: w,
+        height: h,
+        charGrid: [],
+        colorGrid: [],
+        bgColor: currentBgIsWhite ? '#ffffff' : '#000000'
+    };
+
+    for (let y = 0; y < h; y++) {
+        let lineHtml = "";
+        let rowChars = [];
+        let rowColors = [];
+        
+        for (let x = 0; x < w; x++) {
+            const idx = y * w + x;
+            let gray = Math.max(0, Math.min(255, luminance[idx]));
+            const charIndex = Math.floor((1 - (gray / 255)) * (rampLen - 1));
+            let char = charSet[charIndex] || " ";
+
+            rowChars.push(char);
+            asciiParts.push(char);
+
+            let displayChar = char;
+            if (char === " ") displayChar = "&nbsp;";
+            else if (char === "<") displayChar = "&lt;";
+            else if (char === ">") displayChar = "&gt;";
+            else if (char === '"') displayChar = "&quot;";
+            else if (char === "&") displayChar = "&amp;";
+
+            if (useColor) {
+                const r = data[idx * 4];
+                const g = data[idx * 4 + 1];
+                const b = data[idx * 4 + 2];
+                const colorStr = `rgb(${r},${g},${b})`;
+                rowColors.push(colorStr);
+                lineHtml += `<span style="color:${colorStr}">${displayChar}</span>`;
+            } else {
+                const monoColor = currentBgIsWhite ? '#000' : '#fff';
+                rowColors.push(monoColor);
+                lineHtml += displayChar;
+            }
+        }
+        
+        generatedData.charGrid.push(rowChars);
+        generatedData.colorGrid.push(rowColors);
+        htmlParts.push(lineHtml + "<br>");
+        asciiParts.push("\n");
+    }
+    
+    rawHtmlBody = htmlParts.join("");
+    rawAsciiText = asciiParts.join("");
+    output.innerHTML = rawHtmlBody;
+    output.style.fontSize = currentFontSize + "px";
+}
 
         async function copyRichText() {
             if (!rawHtmlBody) return showToast("请先生成图片！", "error");
